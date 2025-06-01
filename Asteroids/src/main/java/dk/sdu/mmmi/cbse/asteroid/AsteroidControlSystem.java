@@ -10,71 +10,53 @@ import java.util.Random;
 
 public class AsteroidControlSystem implements IEntityProcessingService {
 
-    private final Random random = new Random();
-    private final int maxAsteroids = 10; // max asteroids
-    private final float spawnInterval = 1.5f; // Seconds between spawn of asteroid.
-    private float spawnTimer = 0;
+    private Random random = new Random();
+    private float timer = 0;
 
     @Override
     public void process(GameData gameData, World world) {
-        spawnTimer += gameData.getDelta();
+        timer += gameData.getDelta();
 
-        int currentCount = world.getEntities(Asteroid.class).size();
-
-        while (spawnTimer >= spawnInterval && currentCount < maxAsteroids) {
-            Entity asteroid = createAsteroid(gameData);
-            world.addEntity(asteroid);
-            spawnTimer -= spawnInterval;
-            currentCount++;
+        if (timer >= 1.5f && world.getEntities(Asteroid.class).size() < 10) {
+            world.addEntity(createAsteroid(gameData));
+            timer = 0;
         }
     }
 
     private Entity createAsteroid(GameData gameData) {
         Entity asteroid = new Asteroid();
 
-        int size = random.nextInt(20) + 10; // size range
-        asteroid.setPolygonCoordinates(
-                size, -size,
-                -size, -size,
-                -size, size,
-                size, size
-        );
+        // Random size between 10 and 30
+        int size = random.nextInt(20) + 10;
+        asteroid.setPolygonCoordinates(size, -size, -size, -size, -size, size, size, size);
+        asteroid.setRadius(size / 2f);
+        asteroid.setColor(javafx.scene.paint.Color.BLACK);
 
-        // spawn point to avoid asteroids spawning anywhere
+        // Spawn asteroid on one of the screen edges
         int side = random.nextInt(4);
-        float x, y, rotation;
-        switch (side) {
-            case 0: // Left
-                x = 0;
-                y = random.nextInt(gameData.getDisplayHeight());
-                rotation = random.nextInt(120) - 60;
-                break;
-            case 1: // Right
-                x = gameData.getDisplayWidth();
-                y = random.nextInt(gameData.getDisplayHeight());
-                rotation = 180 + random.nextInt(120) - 60;
-                break;
-            case 2: // Top
-                x = random.nextInt(gameData.getDisplayWidth());
-                y = 0;
-                rotation = 90 + random.nextInt(120) - 60;
-                break;
-            case 3: // Bottom
-                x = random.nextInt(gameData.getDisplayWidth());
-                y = gameData.getDisplayHeight();
-                rotation = 270 + random.nextInt(120) - 60;
-                break;
-            default:
-                x = gameData.getDisplayWidth() / 2f;
-                y = gameData.getDisplayHeight() / 2f;
-                rotation = random.nextInt(360);
+        float x = 0, y = 0, rotation = 0;
+
+        if (side == 0) { // Left
+            x = 0;
+            y = random.nextInt(gameData.getDisplayHeight());
+            rotation = random.nextInt(120) - 60;
+        } else if (side == 1) { // Right
+            x = gameData.getDisplayWidth();
+            y = random.nextInt(gameData.getDisplayHeight());
+            rotation = 180 + random.nextInt(120) - 60;
+        } else if (side == 2) { // Top
+            x = random.nextInt(gameData.getDisplayWidth());
+            y = 0;
+            rotation = 90 + random.nextInt(120) - 60;
+        } else { // Bottom
+            x = random.nextInt(gameData.getDisplayWidth());
+            y = gameData.getDisplayHeight();
+            rotation = 270 + random.nextInt(120) - 60;
         }
 
         asteroid.setX(x);
         asteroid.setY(y);
         asteroid.setRotation(rotation);
-        asteroid.setRadius(size / 2f);
-        asteroid.setColor(javafx.scene.paint.Color.BLACK);
 
         return asteroid;
     }

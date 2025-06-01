@@ -1,18 +1,11 @@
 package dk.sdu.mmmi.cbse.enemies;
 
 import dk.sdu.mmmi.cbse.common.bullet.BulletSPI;
-import dk.sdu.mmmi.cbse.common.data.Entity;
-import dk.sdu.mmmi.cbse.common.data.GameData;
-import dk.sdu.mmmi.cbse.common.data.World;
+import dk.sdu.mmmi.cbse.common.data.*;
 import dk.sdu.mmmi.cbse.common.services.IEntityProcessingService;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.ServiceLoader;
-
-import static java.util.stream.Collectors.toList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class EnemyControlSystem implements IEntityProcessingService {
 
@@ -21,98 +14,108 @@ public class EnemyControlSystem implements IEntityProcessingService {
     private final float spawnInterval = 1f;
     private float spawnTimer = 0;
 
-    // Per-enemy state tracking
-    private final Map<Entity, Float> directionChangeTimers = new HashMap<>();
-    private final Map<Entity, Float> shootCooldownTimers = new HashMap<>();
+    // timers per enemy
+    private final Map<Entity, Float> directionTimers = new HashMap<>();
+    private final Map<Entity, Float> shootTimers = new HashMap<>();
 
     @Override
     public void process(GameData gameData, World world) {
         spawnTimer += gameData.getDelta();
-        spawnEnemiesAggressively(gameData, world);
+        spawnEnemies(gameData, world);
 
-        for (Entity enemy : world.getEntities(Enemy.class)) {
-            handleMovement(enemy, gameData);
-            handleBounds(enemy, gameData);
-            maybeShoot(enemy, gameData, world);
+        for (Entity e : world.getEntities()) {
+            // only handle enemies, but avoid direct Enemy.class
+            if (!e.getClass().getSimpleName().equals("Enemy")) continue;
+
+            moveEnemy(e, gameData);
+            keepInsideScreen(e, gameData);
+            maybeShoot(e, gameData, world);
         }
 
-        // Clean up memory if enemies are destroyed
-        directionChangeTimers.keySet().removeIf(e -> !world.getEntities().contains(e));
-        shootCooldownTimers.keySet().removeIf(e -> !world.getEntities().contains(e));
+        // clean up timers if enemy is gone
+        directionTimers.keySet().removeIf(e -> !world.getEntities().contains(e));
+        shootTimers.keySet().removeIf(e -> !world.getEntities().contains(e));
     }
 
-    private void spawnEnemiesAggressively(GameData gameData, World world) {
-        int currentCount = world.getEntities(Enemy.class).size();
+    private void spawnEnemies(GameData gameData, World world) {
+        int count = 0;
+        for (Entity e : world.getEntities()) {
+            if (e.getClass().getSimpleName().equals("Enemy")) {
+                count++;
+            }
+        }
 
-        while (currentCount < maxEnemies && spawnTimer >= spawnInterval) {
-            Entity newEnemy = new EnemyPlugin().createEnemy(gameData);
-            world.addEntity(newEnemy);
-
-            // Initialize per-enemy timers
-            directionChangeTimers.put(newEnemy, 0f);
-            shootCooldownTimers.put(newEnemy, 0f);
-
-            spawnTimer -= spawnInterval;
-            currentCount++;
+        while (count < maxEnemies && spawnTimer >= spawnInterval) {
+            try {
+                Entity newEnemy = new EnemyPlugin().createEnemy(gameData);
+                world.addEntity(newEnemy);
+                directionTimers.put(newEnemy, 0f);
+                shootTimers.put(newEnemy, 0f);
+                spawnTimer -= spawnInterval;
+                count++;
+            } catch (Exception ex) {
+                // ignore if enemy can't spawn
+                break;
+            }
         }
     }
 
-    private void handleMovement(Entity enemy, GameData gameData) {
-        float timer = directionChangeTimers.getOrDefault(enemy, 0f);
-        timer += gameData.getDelta();
+    private void moveEnemy(Entity e, GameData gameData) {
+        float t = directionTimers.getOrDefault(e, 0f);
+        t += gameData.getDelta();
 
-        // Random direction change every 1,5 seconds
-        if (timer >= 1.5f) {
-            int direction = random.nextBoolean() ? 1 : -1;
-            enemy.setRotation(enemy.getRotation() + direction * (5 + random.nextInt(6))); // 5–10 degrees
-            timer = 0f;
+        if (t >= 1.5f) {
+            int dir = random.nextBoolean() ? 1 : -1;
+            e.setRotation(e.getRotation() + dir * (5 + random.nextInt(6)));
+            t = 0f;
         }
-        directionChangeTimers.put(enemy, timer);
 
-        // move forward
-        double radians = Math.toRadians(enemy.getRotation());
-        enemy.setX(enemy.getX() + Math.cos(radians));
-        enemy.setY(enemy.getY() + Math.sin(radians));
+        directionTimers.put(e, t);
+
+        double angle = Math.toRadians(e.getRotation());
+        e.setX(e.getX() + Math.cos(angle));
+        e.setY(e.getY() + Math.sin(angle));
     }
 
-    private void handleBounds(Entity enemy, GameData gameData) {
+    private void keepInsideScreen(Entity e, GameData data) {
         boolean bounced = false;
 
-        if (enemy.getX() < 0 || enemy.getX() > gameData.getDisplayWidth()) {
+        if (e.getX() < 0 || e.getX() > data.getDisplayWidth()) {
+            e.setX(Math.max(0, Math.min(e.getX(), data.getDisplayWidth())));
             bounced = true;
-            enemy.setX(Math.max(0, Math.min(enemy.getX(), gameData.getDisplayWidth())));
         }
 
-        if (enemy.getY() < 0 || enemy.getY() > gameData.getDisplayHeight()) {
+        if (e.getY() < 0 || e.getY() > data.getDisplayHeight()) {
+            e.setY(Math.max(0, Math.min(e.getY(), data.getDisplayHeight())));
             bounced = true;
-            enemy.setY(Math.max(0, Math.min(enemy.getY(), gameData.getDisplayHeight())));
         }
 
         if (bounced) {
-            enemy.setRotation(enemy.getRotation() + 180);
+            e.setRotation(e.getRotation() + 180);
         }
     }
 
-    private void maybeShoot(Entity enemy, GameData gameData, World world) {
-        float shootTimer = shootCooldownTimers.getOrDefault(enemy, 0f);
-        shootTimer += gameData.getDelta();
+    private void maybeShoot(Entity e, GameData gameData, World world) {
+        float timer = shootTimers.getOrDefault(e, 0f);
+        timer += gameData.getDelta();
 
-        if (shootTimer >= 2.5f) {
-            if (random.nextDouble() < 0.2) { // 20% chance to shoot
-                getBulletSPIs().stream().findFirst().ifPresent(spi ->
-                        world.addEntity(spi.createBullet(enemy, gameData))
-                );
+        if (timer >= 2.5f) {
+            if (random.nextDouble() < 0.2) { // 20% chance
+                getBulletSPIs().stream().findFirst().ifPresent(spi -> {
+                    Entity bullet = spi.createBullet(e, gameData);
+                    world.addEntity(bullet);
+                });
             }
-            shootTimer = 0f;
+            timer = 0f;
         }
 
-        shootCooldownTimers.put(enemy, shootTimer);
+        shootTimers.put(e, timer);
     }
 
     private Collection<? extends BulletSPI> getBulletSPIs() {
         return ServiceLoader.load(BulletSPI.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .collect(toList());
+                .collect(Collectors.toList());
     }
 }

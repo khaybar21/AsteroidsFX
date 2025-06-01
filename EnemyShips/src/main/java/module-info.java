@@ -3,7 +3,7 @@ module Enemy {
 
     requires Common;
     requires CommonBullet;
-    requires Bullet;
+    requires static Bullet;
     requires javafx.graphics;
 
     provides dk.sdu.mmmi.cbse.common.services.IGamePluginService

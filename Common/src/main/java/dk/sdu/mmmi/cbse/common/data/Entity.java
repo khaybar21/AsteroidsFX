@@ -14,6 +14,19 @@ public class Entity implements Serializable {
     private double y;
     private double rotation;
     private float radius;
+    private int hp = 5;
+
+public int getHp() {
+    return hp;
+}
+
+public void setHp(int hp) {
+    this.hp = hp;
+}
+
+public void decreaseHp(int amount) {
+    this.hp -= amount;
+}
 
     private Color color = Color.WHITE; // default is white
 

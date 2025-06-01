@@ -3,27 +3,25 @@ package dk.sdu.mmmi.cbse.collisionsystem;
 import dk.sdu.mmmi.cbse.common.asteroids.Asteroid;
 import dk.sdu.mmmi.cbse.common.asteroids.IAsteroidSplitter;
 import dk.sdu.mmmi.cbse.common.bullet.Bullet;
-import dk.sdu.mmmi.cbse.common.services.IPostEntityProcessingService;
 import dk.sdu.mmmi.cbse.common.data.Entity;
 import dk.sdu.mmmi.cbse.common.data.GameData;
 import dk.sdu.mmmi.cbse.common.data.World;
+import dk.sdu.mmmi.cbse.common.services.IPostEntityProcessingService;
 
 import java.util.ServiceLoader;
 
 public class CollisionDetector implements IPostEntityProcessingService {
 
-    private final ServiceLoader<IAsteroidSplitter> asteroidSplitterLoader = ServiceLoader.load(IAsteroidSplitter.class);
+    private final ServiceLoader<IAsteroidSplitter> splitterLoader = ServiceLoader.load(IAsteroidSplitter.class);
 
     @Override
     public void process(GameData gameData, World world) {
-        for (Entity entity1 : world.getEntities()) {
-            for (Entity entity2 : world.getEntities()) {
-                if (entity1.getID().equals(entity2.getID())) {
-                    continue;
-                }
+        for (Entity e1 : world.getEntities()) {
+            for (Entity e2 : world.getEntities()) {
+                if (e1.getID().equals(e2.getID())) continue;
 
-                if (collides(entity1, entity2)) {
-                    handleCollision(entity1, entity2, world);
+                if (collides(e1, e2)) {
+                    handleCollision(e1, e2, world);
                 }
             }
         }
@@ -46,7 +44,7 @@ public class CollisionDetector implements IPostEntityProcessingService {
         boolean isEnemy = c1.equals("Enemy") || c2.equals("Enemy");
 
         // Bullet hits asteroid
-        if ((e1 instanceof Bullet && e2 instanceof Asteroid) || (e2 instanceof Bullet && e1 instanceof Asteroid)) {
+        if (isBullet && isAsteroid) {
             Entity asteroid = e1 instanceof Asteroid ? e1 : e2;
             createAsteroidSplit(asteroid, world);
             world.removeEntity(asteroid);
@@ -54,19 +52,32 @@ public class CollisionDetector implements IPostEntityProcessingService {
             world.removeEntity(e2);
         }
 
-        // Bullet hits enemy or player
+        // Bullet hits player or enemy
         else if (isBullet && (isEnemy || isPlayer)) {
+            Entity target = e1 instanceof Bullet ? e2 : e1;
+            target.decreaseHp(1);
+
+            Entity bullet = e1 instanceof Bullet ? e1 : e2;
+            world.removeEntity(bullet);
+
+            if (target.getHp() <= 0) {
+                world.removeEntity(target);
+            }
+        }
+
+        // Player hits asteroid = only player dies
+        else if (isAsteroid && isPlayer) {
+            Entity player = c1.equals("Player") ? e1 : e2;
+            world.removeEntity(player);
+        }
+
+        // Enemy hits asteroid  = both are removed
+        else if (isAsteroid && isEnemy) {
             world.removeEntity(e1);
             world.removeEntity(e2);
         }
 
-        // Asteroid hits player or enemy
-        else if (isAsteroid && (isPlayer || isEnemy)) {
-            world.removeEntity(e1);
-            world.removeEntity(e2);
-        }
-
-        // Enemy hits player
+        // Enemy and player collide  = both are removed
         else if (isEnemy && isPlayer) {
             world.removeEntity(e1);
             world.removeEntity(e2);
@@ -74,7 +85,7 @@ public class CollisionDetector implements IPostEntityProcessingService {
     }
 
     private void createAsteroidSplit(Entity asteroid, World world) {
-        for (IAsteroidSplitter splitter : asteroidSplitterLoader) {
+        for (IAsteroidSplitter splitter : splitterLoader) {
             splitter.createSplitAsteroid(asteroid, world);
         }
     }

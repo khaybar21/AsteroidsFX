@@ -16,7 +16,6 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
 
 
-        // Spring
         context = new AnnotationConfigApplicationContext(ModuleConfig.class);
 
 

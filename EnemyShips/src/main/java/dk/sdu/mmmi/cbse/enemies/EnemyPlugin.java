@@ -1,8 +1,6 @@
 package dk.sdu.mmmi.cbse.enemies;
 
-import dk.sdu.mmmi.cbse.common.data.Entity;
-import dk.sdu.mmmi.cbse.common.data.GameData;
-import dk.sdu.mmmi.cbse.common.data.World;
+import dk.sdu.mmmi.cbse.common.data.*;
 import dk.sdu.mmmi.cbse.common.services.IGamePluginService;
 import javafx.scene.paint.Color;
 
@@ -18,54 +16,30 @@ public class EnemyPlugin implements IGamePluginService {
         world.addEntity(enemy);
     }
 
-    Entity createEnemy(GameData gameData) {
-        Entity enemyShip = new Enemy();
+    public Entity createEnemy(GameData gameData) {
+        Entity e = new Enemy();
 
-        Random random = new Random();
-        float x, y;
-        float rotation;
-
-        int side = random.nextInt(4); // 0 = left, 1 = right, 2 = top, 3 = bottom
+        Random r = new Random();
+        float x, y, rot;
+        int side = r.nextInt(4);
 
         switch (side) {
-            case 0: // Left edge
-                x = 0;
-                y = random.nextInt(gameData.getDisplayHeight());
-                rotation = random.nextInt(120) - 60; // Aim rightward
-                break;
-            case 1: // Right edge
-                x = gameData.getDisplayWidth();
-                y = random.nextInt(gameData.getDisplayHeight());
-                rotation = 180 + random.nextInt(120) - 60; // Aim leftward
-                break;
-            case 2: // Top edge
-                x = random.nextInt(gameData.getDisplayWidth());
-                y = 0;
-                rotation = 90 + random.nextInt(120) - 60; // Aim downward
-                break;
-            case 3: // Bottom edge
-                x = random.nextInt(gameData.getDisplayWidth());
-                y = gameData.getDisplayHeight();
-                rotation = 270 + random.nextInt(120) - 60; // Aim upward
-                break;
-            default:
-                x = gameData.getDisplayWidth() / 2f;
-                y = gameData.getDisplayHeight() / 2f;
-                rotation = random.nextInt(360);
+            case 0: x = 0; y = r.nextInt(gameData.getDisplayHeight()); rot = r.nextInt(120) - 60; break;
+            case 1: x = gameData.getDisplayWidth(); y = r.nextInt(gameData.getDisplayHeight()); rot = 180 + r.nextInt(120) - 60; break;
+            case 2: x = r.nextInt(gameData.getDisplayWidth()); y = 0; rot = 90 + r.nextInt(120) - 60; break;
+            case 3: x = r.nextInt(gameData.getDisplayWidth()); y = gameData.getDisplayHeight(); rot = 270 + r.nextInt(120) - 60; break;
+            default: x = 300; y = 300; rot = r.nextInt(360); // fallback
         }
 
-        enemyShip.setX(x);
-        enemyShip.setY(y);
-        enemyShip.setRotation(rotation);
-        enemyShip.setRadius(10);
+        e.setX(x);
+        e.setY(y);
+        e.setRotation(rot);
+        e.setRadius(10);
+        e.setPolygonCoordinates(-5, -5, 10, 0, -5, 5);
+        e.setColor(Color.RED);
+        e.setHp(5); // basic HP
 
-        // enemy shape
-        enemyShip.setPolygonCoordinates(-5, -5, 10, 0, -5, 5);
-
-        // enemy color
-        enemyShip.setColor(Color.RED);
-
-        return enemyShip;
+        return e;
     }
 
     @Override

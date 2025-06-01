@@ -2,9 +2,10 @@ import dk.sdu.mmmi.cbse.common.services.IPostEntityProcessingService;
 
 module Collision {
     requires Common;
-    requires Bullet;
+    requires static Bullet;
     requires CommonBullet;
-    requires Player;
+   requires static Player;
+
     requires CommonAsteroids;
 
     uses dk.sdu.mmmi.cbse.common.asteroids.IAsteroidSplitter;

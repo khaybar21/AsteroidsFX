@@ -22,12 +22,14 @@ public class PlayerPlugin implements IGamePluginService {
         world.removeEntity(player);
     }
 
-    private Entity initPlayer(GameData data) {
-        Entity p = new Player();
-        p.setPolygonCoordinates(-6, -5, 10, 0, -6, 5);
-        p.setX(data.getDisplayWidth() * 0.5f);
-        p.setY(data.getDisplayHeight() * 0.5f);
-        p.setRadius(8);
-        return p;
-    }
+   private Entity initPlayer(GameData data) {
+    Entity p = new Player();
+    p.setPolygonCoordinates(-6, -5, 10, 0, -6, 5);
+    p.setX(data.getDisplayWidth() * 0.5f);
+    p.setY(data.getDisplayHeight() * 0.5f);
+    p.setRadius(8);
+    p.setHp(5); 
+    return p;
+}
+
 }

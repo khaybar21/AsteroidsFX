@@ -1,5 +1,6 @@
 package dk.sdu.mmmi.cbse.bulletsystem;
 
+import dk.sdu.mmmi.cbse.bulletsystem.BulletControlSystem;
 import dk.sdu.mmmi.cbse.common.data.Entity;
 import dk.sdu.mmmi.cbse.common.data.GameData;
 import org.junit.jupiter.api.Test;
@@ -24,3 +25,4 @@ class BulletControlSystemTest {
         assertTrue(bullet.getY() > 200); // moving down if rotation is 90 degrees
     }
 }
+

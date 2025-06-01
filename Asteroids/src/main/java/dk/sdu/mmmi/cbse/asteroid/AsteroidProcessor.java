@@ -9,46 +9,34 @@ import dk.sdu.mmmi.cbse.common.services.IEntityProcessingService;
 
 public class AsteroidProcessor implements IEntityProcessingService {
 
-    private IAsteroidSplitter asteroidSplitter = new AsteroidSplitterImpl();
+    private IAsteroidSplitter splitter = new AsteroidSplitterImpl();
 
     @Override
     public void process(GameData gameData, World world) {
         for (Entity asteroid : world.getEntities(Asteroid.class)) {
-            double changeX = Math.cos(Math.toRadians(asteroid.getRotation()));
-            double changeY = Math.sin(Math.toRadians(asteroid.getRotation()));
+            // Move asteroid forward based on its rotation
+            double dx = Math.cos(Math.toRadians(asteroid.getRotation()));
+            double dy = Math.sin(Math.toRadians(asteroid.getRotation()));
+            asteroid.setX(asteroid.getX() + dx * 0.5);
+            asteroid.setY(asteroid.getY() + dy * 0.5);
 
-            asteroid.setX(asteroid.getX() + changeX * 0.5);
-            asteroid.setY(asteroid.getY() + changeY * 0.5);
 
-            // ✅ FIXED: Use + instead of -
-            if (asteroid.getX() < 0) {
-                asteroid.setX(asteroid.getX() + gameData.getDisplayWidth());
-            }
-
-            if (asteroid.getX() > gameData.getDisplayWidth()) {
-                asteroid.setX(asteroid.getX() % gameData.getDisplayWidth());
-            }
-
-            if (asteroid.getY() < 0) {
-                asteroid.setY(asteroid.getY() + gameData.getDisplayHeight());
-            }
-
-            if (asteroid.getY() > gameData.getDisplayHeight()) {
-                asteroid.setY(asteroid.getY() % gameData.getDisplayHeight());
-            }
+            wrapPosition(asteroid, gameData);
         }
     }
 
-    /**
-     * Dependency Injection using OSGi Declarative Services
-     */
-    public void setAsteroidSplitter(IAsteroidSplitter asteroidSplitter) {
-        this.asteroidSplitter = asteroidSplitter;
+    private void wrapPosition(Entity e, GameData data) {
+        if (e.getX() < 0) e.setX(e.getX() + data.getDisplayWidth());
+        if (e.getX() > data.getDisplayWidth()) e.setX(e.getX() % data.getDisplayWidth());
+        if (e.getY() < 0) e.setY(e.getY() + data.getDisplayHeight());
+        if (e.getY() > data.getDisplayHeight()) e.setY(e.getY() % data.getDisplayHeight());
     }
 
-    public void removeAsteroidSplitter(IAsteroidSplitter asteroidSplitter) {
-        this.asteroidSplitter = null;
+    public void setAsteroidSplitter(IAsteroidSplitter splitter) {
+        this.splitter = splitter;
     }
 
-
+    public void removeAsteroidSplitter(IAsteroidSplitter splitter) {
+        this.splitter = null;
+    }
 }
