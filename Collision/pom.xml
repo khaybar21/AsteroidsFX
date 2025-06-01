@@ -34,12 +34,7 @@
             <artifactId>CommonAsteroids</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>Enemy</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-            <optional>true</optional>
-        </dependency>
+
 
     </dependencies>
 

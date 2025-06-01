@@ -19,7 +19,7 @@
         <module>CommonAsteroids</module>
         <module>Asteroids</module>
         <module>Collision</module>
-        <module>EnemyShips</module>
+
 
 
     </modules>
